@@ -40,6 +40,35 @@ describe("directory", function() {
 		stat.isFile().should.be.eql(false);
 		stat.isDirectory().should.be.eql(true);
 	});
+	it("should rename files", function() {
+		var fs = new MemoryFileSystem();
+		var expectedContent = '{"renamedSync": true}';
+
+		fs.mkdirpSync('/test/rename');
+		fs.writeFileSync('/test/rename/file.json', expectedContent, 'utf8');
+		fs.renameSync('/test/rename/file.json', '/test/rename/renamed-file.json');
+		fs.existsSync('/test/rename/file.json').should.equal(false);
+		fs.existsSync('/test/rename/renamed-file.json').should.equal(true);
+		fs.readFileSync('/test/rename/renamed-file.json').toString().should.equal(expectedContent);
+
+		fs.mkdirpSync('/test/rename-2.1');
+		fs.mkdirpSync('/test/rename-2.2');
+		fs.writeFileSync('/test/rename-2.1/file.json', expectedContent, 'utf8');
+		fs.renameSync('/test/rename-2.1/file.json', '/test/rename-2.2/file.json');
+		fs.existsSync('/test/rename-2.1/file.json').should.equal(false);
+		fs.existsSync('/test/rename-2.2/file.json').should.equal(true);
+
+		fs.mkdirpSync('/test/rename-3');
+		fs.writeFileSync('/test/rename-3/file.json', expectedContent, 'utf8');
+		let errorThrown = false;
+		try {
+			fs.renameSync('/test/rename-3/file.json', '/test/rename-3-unexistant-directory/new-file.json');
+		} catch (e) {
+			e.message.includes("ENOENT: no such file or directory, readdir '/test/rename-3-unexistant-directory").should.equal(true);
+			errorThrown = true;
+		}
+		errorThrown.should.equal(true);
+	});
 	it("should make and remove directories (windows style)", function() {
 		var fs = new MemoryFileSystem();
 		fs.mkdirSync("C:\\");
